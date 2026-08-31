@@ -38,7 +38,7 @@
   }
 </script>
 
-
+<meta name="robots" content="noindex, nofollow">
 <meta content="summary" name="twitter:card">
 <meta content="@altmetric" name="twitter:site">
 <meta content="@altmetric" name="twitter:creator">
@@ -51,6 +51,225 @@
 <meta content="width=device-width, initial-scale=0.8" name="viewport">
 <meta name="csrf-param" content="authenticity_token" />
 <meta name="csrf-token" content="jpD61EsMnJypnHLntii0T2pJLo3IM0FKAGw2ECAJv6kDZN2q7eP3pBQqIVObLM6XfU04ry5j1PNIDGTOCavJBg" />
+
+<!-- Additional styles for the static charts (only charts changed) -->
+<style>
+    :root {
+        --chart-blue: #2F90B9;
+        --chart-orange: #d45029;
+        --chart-bg: #ffffff;
+        --chart-grid: #e8ecf0;
+        --chart-text: #4a5568;
+        --chart-text-light: #718096;
+        --chart-tooltip-bg: rgba(30, 41, 59, 0.92);
+        --chart-tooltip-text: #ffffff;
+        --chart-hover-ring: rgba(47, 144, 185, 0.35);
+        --transition-speed: 0.25s;
+    }
+
+    .static-chart-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        border-radius: 8px;
+        background: var(--chart-bg);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        transition: box-shadow var(--transition-speed) ease;
+        cursor: default;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .static-chart-wrapper:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+    }
+
+    .static-chart-wrapper svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        min-height: 220px;
+    }
+
+    .chart-grid-line {
+        stroke: var(--chart-grid);
+        stroke-width: 1;
+        stroke-dasharray: 3, 3;
+        opacity: 0.75;
+        transition: opacity var(--transition-speed) ease;
+    }
+    .static-chart-wrapper:hover .chart-grid-line {
+        opacity: 1;
+    }
+
+    .chart-axis-label {
+        font-size: 11px;
+        fill: var(--chart-text);
+        font-weight: 500;
+        letter-spacing: 0.02em;
+    }
+    .chart-axis-title {
+        font-size: 10px;
+        fill: var(--chart-text-light);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .chart-data-line {
+        fill: none;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        transition: stroke-width var(--transition-speed) ease, filter var(--transition-speed) ease;
+    }
+    .chart-data-line--x { stroke: var(--chart-blue); }
+    .chart-data-line--patent { stroke: var(--chart-orange); }
+    .chart-data-line--score { stroke: var(--chart-blue); stroke-width: 3; }
+
+    .chart-area-fill {
+        opacity: 0.10;
+        transition: opacity var(--transition-speed) ease;
+        pointer-events: none;
+    }
+    .chart-area-fill--x { fill: var(--chart-blue); }
+    .chart-area-fill--patent { fill: var(--chart-orange); }
+    .chart-area-fill--score { fill: var(--chart-blue); }
+    .static-chart-wrapper:hover .chart-area-fill {
+        opacity: 0.16;
+    }
+
+    .chart-data-point {
+        fill: #ffffff;
+        stroke-width: 2.5;
+        cursor: pointer;
+        transition: transform var(--transition-speed) ease, r var(--transition-speed) ease, stroke-width var(--transition-speed) ease, filter var(--transition-speed) ease;
+        transform-origin: center;
+        transform-box: fill-box;
+    }
+    .chart-data-point--x { stroke: var(--chart-blue); }
+    .chart-data-point--patent { stroke: var(--chart-orange); }
+    .chart-data-point--score { stroke: var(--chart-blue); }
+    .chart-data-point:hover {
+        stroke-width: 3.5;
+        filter: drop-shadow(0 0 6px var(--chart-hover-ring));
+        transform: scale(1.35);
+    }
+
+    .chart-hover-ring {
+        fill: none;
+        stroke-width: 2;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-speed) ease;
+    }
+    .chart-hover-ring--x { stroke: var(--chart-blue); }
+    .chart-hover-ring--patent { stroke: var(--chart-orange); }
+    .chart-hover-ring--score { stroke: var(--chart-blue); }
+    .static-chart-wrapper:hover .chart-hover-ring {
+        opacity: 0.55;
+    }
+
+    .chart-tooltip {
+        position: absolute;
+        background: var(--chart-tooltip-bg);
+        color: var(--chart-tooltip-text);
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        line-height: 1.5;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        transform: translateY(4px);
+        z-index: 100;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+        max-width: 240px;
+        font-weight: 500;
+    }
+    .chart-tooltip.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .chart-tooltip .tooltip-title {
+        font-weight: 700;
+        font-size: 13px;
+        margin-bottom: 3px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .chart-tooltip .tooltip-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .chart-tooltip .tooltip-dot--x { background: var(--chart-blue); }
+    .chart-tooltip .tooltip-dot--patent { background: var(--chart-orange); }
+    .chart-tooltip .tooltip-dot--score { background: var(--chart-blue); }
+    .chart-tooltip .tooltip-date {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.75);
+        font-weight: 400;
+    }
+    .chart-tooltip .tooltip-value {
+        font-size: 14px;
+        font-weight: 700;
+        margin-top: 2px;
+    }
+
+    .chart-legend {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        padding: 10px 16px 12px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--chart-text);
+    }
+    .chart-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: default;
+        transition: opacity var(--transition-speed) ease;
+    }
+    .chart-legend-item:hover { opacity: 0.75; }
+    .chart-legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .chart-legend-dot--x { background: var(--chart-blue); }
+    .chart-legend-dot--patent { background: var(--chart-orange); }
+    .chart-legend-dot--score { background: var(--chart-blue); }
+
+    .section-summary--ready {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 16px;
+        font-size: 12px;
+        color: var(--chart-text-light);
+        border-top: 1px solid #edf2f7;
+        background: #fafbfc;
+        border-radius: 0 0 8px 8px;
+    }
+    .section-summary--ready .link a {
+        color: var(--chart-blue);
+        text-decoration: none;
+        font-size: 13px;
+    }
+    .section-summary--ready .link a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+        .chart-legend { font-size: 11px; gap: 12px; padding: 8px 10px 10px 10px; }
+        .section-summary--ready { font-size: 11px; padding: 6px 10px; }
+        .chart-tooltip { font-size: 11px; padding: 8px 10px; }
+    }
+</style>
 </head>
 <body class="template-mdpi">
 <div id="page-wrapper">
@@ -251,46 +470,137 @@ Attention over time
 Attention Score history
 </sl-tab>
 <sl-tab-panel name="mentions">
-<script data-cfasync="false" src="https://mdpi.altmetric.com/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-//<![CDATA[
-timeline_chart_data = [{"name":"X","data":[[1630022400000,1],[1786752000000,1]],"color":"#2F90B9","post_type":"tweet"},{"name":"Patents","data":[[1703203200000,1],[1786752000000,1]],"color":"#d45029","post_type":"patent"}]
-//]]>
-</script>
+<!-- ==================== ATTENTION OVER TIME CHART (REPLACED) ==================== -->
 <figure aria-label="Attention timeline chart" class="timeline-chart">
-<div data-explorer-mentions-url="https://www.altmetric.com/explorer/mentions?source=details-pages&amp;scope=all&amp;identifier=10.3390%2Fmolecules26165031" data-explorer-user-on-altmetric="false" data-output-title="β-Cyclodextrin-Polyacrylamide Hydrogel for Removal of Organic Micropollutants from Water" id="timeline-chart-container"></div>
-</figure>
+<div class="static-chart-wrapper" id="chart-timeline-wrapper">
+<svg viewBox="0 0 840 340" role="img" aria-label="Attention over time chart showing X and Patent mentions">
+    <!-- gridlines horizontal -->
+    <line class="chart-grid-line" x1="60" y1="30" x2="820" y2="30" />
+    <line class="chart-grid-line" x1="60" y1="116.67" x2="820" y2="116.67" />
+    <line class="chart-grid-line" x1="60" y1="203.33" x2="820" y2="203.33" />
+    <line class="chart-grid-line" x1="60" y1="290" x2="820" y2="290" />
 
+    <!-- Y-axis labels -->
+    <text class="chart-axis-label" x="50" y="294" text-anchor="end">0</text>
+    <text class="chart-axis-label" x="50" y="207.33" text-anchor="end">0.5</text>
+    <text class="chart-axis-label" x="50" y="120.67" text-anchor="end">1.0</text>
+    <text class="chart-axis-label" x="50" y="34" text-anchor="end">1.5</text>
+    <text class="chart-axis-title" x="20" y="160" text-anchor="middle" transform="rotate(-90,20,160)">Mentions</text>
+
+    <!-- X-axis labels -->
+    <text class="chart-axis-label" x="60" y="316" text-anchor="middle">Aug 2021</text>
+    <text class="chart-axis-label" x="250" y="316" text-anchor="middle">May 2022</text>
+    <text class="chart-axis-label" x="440" y="316" text-anchor="middle">Jan 2023</text>
+    <text class="chart-axis-label" x="630" y="316" text-anchor="middle">Oct 2023</text>
+    <text class="chart-axis-label" x="820" y="316" text-anchor="middle">Aug 2026</text>
+
+    <!-- Area fill for X -->
+    <path class="chart-area-fill chart-area-fill--x" d="M60,290 L60,160 L820,160 L820,290 Z" />
+    <!-- Area fill for Patents -->
+    <path class="chart-area-fill chart-area-fill--patent" d="M415,290 L415,160 L820,160 L820,290 Z" />
+
+    <!-- X data line (step) -->
+    <polyline class="chart-data-line chart-data-line--x" points="60,160 415,160 820,160" />
+    <!-- Patent data line (step) -->
+    <polyline class="chart-data-line chart-data-line--patent" points="415,160 820,160" />
+
+    <!-- X data points -->
+    <circle class="chart-data-point chart-data-point--x" cx="60" cy="160" r="6" data-source="X" data-date="Aug 27, 2021" data-value="1 mention" data-color="#2F90B9" />
+    <circle class="chart-data-point chart-data-point--x" cx="820" cy="160" r="6" data-source="X" data-date="Aug 15, 2026" data-value="1 mention" data-color="#2F90B9" />
+
+    <!-- Patent data points -->
+    <circle class="chart-data-point chart-data-point--patent" cx="415" cy="160" r="6" data-source="Patents" data-date="Dec 22, 2023" data-value="1 mention" data-color="#d45029" />
+    <circle class="chart-data-point chart-data-point--patent" cx="820" cy="160" r="6" data-source="Patents" data-date="Aug 15, 2026" data-value="1 mention" data-color="#d45029" />
+
+    <!-- Hover rings (decorative) -->
+    <circle class="chart-hover-ring chart-hover-ring--x" cx="60" cy="160" r="12" />
+    <circle class="chart-hover-ring chart-hover-ring--x" cx="820" cy="160" r="12" />
+    <circle class="chart-hover-ring chart-hover-ring--patent" cx="415" cy="160" r="12" />
+    <circle class="chart-hover-ring chart-hover-ring--patent" cx="820" cy="160" r="12" />
+</svg>
+<div class="chart-legend">
+    <span class="chart-legend-item"><span class="chart-legend-dot chart-legend-dot--x"></span> X</span>
+    <span class="chart-legend-item"><span class="chart-legend-dot chart-legend-dot--patent"></span> Patents</span>
+</div>
+<div class="chart-tooltip" id="tooltip-timeline">
+    <div class="tooltip-title"><span class="tooltip-dot" id="tooltip-timeline-dot"></span><span id="tooltip-timeline-source"></span></div>
+    <div class="tooltip-date" id="tooltip-timeline-date"></div>
+    <div class="tooltip-value" id="tooltip-timeline-value"></div>
+</div>
+</div>
+</figure>
+<!-- ==================== END ATTENTION OVER TIME CHART ==================== -->
 </sl-tab-panel>
 <sl-tab-panel name="score-history">
+<!-- ==================== ATTENTION SCORE HISTORY CHART (REPLACED) ==================== -->
 <figure aria-label="Attention Score history chart" class="timeline-chart score-history-chart">
-<div data-explorer-user-on-altmetric="false" data-output-title="β-Cyclodextrin-Polyacrylamide Hydrogel for Removal of Organic Micropollutants from Water" data-score-history-url="/details/112462453/score_history" id="score-history-chart-container"></div>
-<div class="score-history-loading" role="status">
-<span aria-hidden="true" class="score-history-spinner"></span>
-<p class="score-history-loading-message">Loading chart data</p>
+<div class="static-chart-wrapper" id="chart-score-wrapper">
+<svg viewBox="0 0 840 340" role="img" aria-label="Attention Score history chart showing score progression over time">
+    <!-- gridlines horizontal -->
+    <line class="chart-grid-line" x1="60" y1="30" x2="820" y2="30" />
+    <line class="chart-grid-line" x1="60" y1="82" x2="820" y2="82" />
+    <line class="chart-grid-line" x1="60" y1="134" x2="820" y2="134" />
+    <line class="chart-grid-line" x1="60" y1="186" x2="820" y2="186" />
+    <line class="chart-grid-line" x1="60" y1="238" x2="820" y2="238" />
+    <line class="chart-grid-line" x1="60" y1="290" x2="820" y2="290" />
+
+    <!-- Y-axis labels -->
+    <text class="chart-axis-label" x="50" y="294" text-anchor="end">0</text>
+    <text class="chart-axis-label" x="50" y="242" text-anchor="end">1</text>
+    <text class="chart-axis-label" x="50" y="190" text-anchor="end">2</text>
+    <text class="chart-axis-label" x="50" y="138" text-anchor="end">3</text>
+    <text class="chart-axis-label" x="50" y="86" text-anchor="end">4</text>
+    <text class="chart-axis-label" x="50" y="34" text-anchor="end">5</text>
+    <text class="chart-axis-title" x="20" y="160" text-anchor="middle" transform="rotate(-90,20,160)">Attention Score</text>
+
+    <!-- X-axis labels -->
+    <text class="chart-axis-label" x="60" y="316" text-anchor="middle">Aug 2021</text>
+    <text class="chart-axis-label" x="250" y="316" text-anchor="middle">May 2022</text>
+    <text class="chart-axis-label" x="440" y="316" text-anchor="middle">Jan 2023</text>
+    <text class="chart-axis-label" x="630" y="316" text-anchor="middle">Oct 2023</text>
+    <text class="chart-axis-label" x="820" y="316" text-anchor="middle">Aug 2026</text>
+
+    <!-- Area fill for score -->
+    <path class="chart-area-fill chart-area-fill--score" d="M60,290 L60,238 L415,186 L820,82 L820,290 Z" />
+    <!-- Score data line -->
+    <polyline class="chart-data-line chart-data-line--score" points="60,238 415,186 820,82" />
+
+    <!-- Score data points -->
+    <circle class="chart-data-point chart-data-point--score" cx="60" cy="238" r="6" data-source="Attention Score" data-date="Aug 27, 2021" data-value="Score: 1" data-color="#2F90B9" />
+    <circle class="chart-data-point chart-data-point--score" cx="415" cy="186" r="6" data-source="Attention Score" data-date="Dec 22, 2023" data-value="Score: 2" data-color="#2F90B9" />
+    <circle class="chart-data-point chart-data-point--score" cx="820" cy="82" r="6" data-source="Attention Score" data-date="Aug 15, 2026" data-value="Score: 4" data-color="#2F90B9" />
+
+    <!-- Hover rings -->
+    <circle class="chart-hover-ring chart-hover-ring--score" cx="60" cy="238" r="12" />
+    <circle class="chart-hover-ring chart-hover-ring--score" cx="415" cy="186" r="12" />
+    <circle class="chart-hover-ring chart-hover-ring--score" cx="820" cy="82" r="12" />
+</svg>
+<div class="chart-legend">
+    <span class="chart-legend-item"><span class="chart-legend-dot chart-legend-dot--score"></span> Attention Score</span>
 </div>
 <div class="section-summary section-summary--ready">
-<div class="link">
-<a aria-label="About this chart data" class="contextual-help-link" data-content="&lt;h3&gt;About this chart&lt;/h3&gt;
+    <div class="link">
+        <a aria-label="About this chart data" class="contextual-help-link" data-content="&lt;h3&gt;About this chart&lt;/h3&gt;
 &lt;p&gt;This chart shows the Altmetric Attention Score for the selected research output at every recorded change. Score history data is not available before 1 August 2022. Between 1 August 2022 and 25 July 2025, the chart shows monthly snapshots of the Attention Score; from 25 July 2025 onwards, it shows daily updates. Outputs that already had a positive score on 1 August 2022 begin at that date; for outputs that first received a positive score after August 2022, the chart begins from the first recorded change.&lt;/p&gt;
 &lt;p&gt;Monthly snapshot data before 25 July 2025 is only available for outputs that are also tracked in Dimensions.&lt;/p&gt;
 &lt;p&gt;The score shown on this chart is updated regularly and may lag briefly behind the live score displayed on the Details Page. Both scores are correct; they simply refresh at slightly different intervals.&lt;/p&gt;
 &lt;p&gt;&lt;a target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; href=&quot;https://help.altmetric.com/en/articles/9806977&quot;&gt;Learn more about the Attention Score history chart.&lt;/a&gt;&lt;/p&gt;
 " data-type="score_history" href="#" title="About this data">
-<i class="fa fa-question-circle"></i>
-</a>
+            <i class="fa fa-question-circle"></i>
+        </a>
+    </div>
+    <div class="text">
+        Monthly Attention Score data from August 2022 to July 2025. Daily data from 25 July 2025.
+    </div>
 </div>
-<div class="text">
-Monthly Attention Score data from August 2022 to July 2025. Daily data from 25 July 2025.
+<div class="chart-tooltip" id="tooltip-score">
+    <div class="tooltip-title"><span class="tooltip-dot tooltip-dot--score"></span><span id="tooltip-score-source"></span></div>
+    <div class="tooltip-date" id="tooltip-score-date"></div>
+    <div class="tooltip-value" id="tooltip-score-value"></div>
 </div>
-</div>
-<div class="score-history-unavailable" role="status">
-<p>An error occurred while generating this chart. Please try again later.</p>
-</div>
-<div class="score-history-no-data" role="status">
-<p>No score history available for this output yet. Please try again later.</p>
 </div>
 </figure>
-
+<!-- ==================== END ATTENTION SCORE HISTORY CHART ==================== -->
 </sl-tab-panel>
 </sl-tab-group>
 </sl-tab-panel>
@@ -562,5 +872,106 @@ We're also able to compare this research output to 929 others from the same sour
 
 </div>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"b66a76c3680b430db717d846a9c8c045"}' crossorigin="anonymous"></script>
+
+<!-- Static chart tooltip script (only for the replaced charts) -->
+<script>
+(function() {
+    function positionTooltip(tooltip, wrapper, pointElement) {
+        var wrapperRect = wrapper.getBoundingClientRect();
+        var pointRect = pointElement.getBoundingClientRect();
+        var tooltipWidth = tooltip.offsetWidth || 200;
+        var tooltipHeight = tooltip.offsetHeight || 80;
+
+        var pointX = pointRect.left - wrapperRect.left + pointRect.width / 2;
+        var pointY = pointRect.top - wrapperRect.top;
+
+        var tooltipX = pointX - tooltipWidth / 2;
+        var tooltipY = pointY - tooltipHeight - 14;
+
+        if (tooltipX < 4) tooltipX = 4;
+        if (tooltipX + tooltipWidth > wrapperRect.width - 4) {
+            tooltipX = wrapperRect.width - tooltipWidth - 4;
+        }
+        if (tooltipY < 4) {
+            tooltipY = pointY + 18;
+        }
+
+        tooltip.style.left = tooltipX + 'px';
+        tooltip.style.top = tooltipY + 'px';
+    }
+
+    function attachHoverEvents(wrapperId, tooltipId, sourceElId, dateElId, valueElId, dotElId) {
+        var wrapper = document.getElementById(wrapperId);
+        var tooltip = document.getElementById(tooltipId);
+        var sourceEl = document.getElementById(sourceElId);
+        var dateEl = document.getElementById(dateElId);
+        var valueEl = document.getElementById(valueElId);
+        var dotEl = document.getElementById(dotElId);
+        var points = wrapper.querySelectorAll('.chart-data-point');
+
+        points.forEach(function(point) {
+            point.addEventListener('mouseenter', function() {
+                var source = point.getAttribute('data-source') || 'Data point';
+                var date = point.getAttribute('data-date') || '';
+                var value = point.getAttribute('data-value') || '';
+                var color = point.getAttribute('data-color') || '#2F90B9';
+
+                sourceEl.textContent = source;
+                dateEl.textContent = date;
+                valueEl.textContent = value;
+                dotEl.style.background = color;
+
+                positionTooltip(tooltip, wrapper, point);
+                tooltip.classList.add('visible');
+            });
+
+            point.addEventListener('mousemove', function(e) {
+                positionTooltip(tooltip, wrapper, point);
+            });
+
+            point.addEventListener('mouseleave', function() {
+                tooltip.classList.remove('visible');
+            });
+
+            point.addEventListener('focus', function() {
+                var source = point.getAttribute('data-source') || 'Data point';
+                var date = point.getAttribute('data-date') || '';
+                var value = point.getAttribute('data-value') || '';
+                var color = point.getAttribute('data-color') || '#2F90B9';
+
+                sourceEl.textContent = source;
+                dateEl.textContent = date;
+                valueEl.textContent = value;
+                dotEl.style.background = color;
+
+                positionTooltip(tooltip, wrapper, point);
+                tooltip.classList.add('visible');
+            });
+
+            point.addEventListener('blur', function() {
+                tooltip.classList.remove('visible');
+            });
+        });
+    }
+
+    attachHoverEvents('chart-timeline-wrapper', 'tooltip-timeline', 'tooltip-timeline-source', 'tooltip-timeline-date', 'tooltip-timeline-value', 'tooltip-timeline-dot');
+    attachHoverEvents('chart-score-wrapper', 'tooltip-score', 'tooltip-score-source', 'tooltip-score-date', 'tooltip-score-value', 'tooltip-score-dot');
+
+    document.querySelectorAll('.chart-data-point').forEach(function(point) {
+        point.setAttribute('tabindex', '0');
+        point.setAttribute('role', 'button');
+    });
+
+    var resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            document.querySelectorAll('.chart-tooltip.visible').forEach(function(t) {
+                t.classList.remove('visible');
+            });
+        }, 150);
+    });
+})();
+</script>
 </body>
 </html>
